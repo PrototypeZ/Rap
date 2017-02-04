@@ -91,6 +91,21 @@
                       android:layout_height="wrap_content"
                       android:orientation="horizontal"
                       android:layout_marginTop="10dp">
+            <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="GestureCodeValidate:"/>
+            <TextView
+                    android:id="@+id/gesture"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text=""/>
+        </LinearLayout>
+
+        <LinearLayout android:layout_width="match_parent"
+                      android:layout_height="wrap_content"
+                      android:orientation="horizontal"
+                      android:layout_marginTop="10dp">
             <Button
                     android:id="@+id/login"
                     android:layout_width="wrap_content"
@@ -101,6 +116,18 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="Logout"/>
+
+            <Button
+                    android:id="@+id/gestureVerify"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="手势解锁"/>
+
+            <Button
+                    android:id="@+id/refresh"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Refresh"/>
 
         </LinearLayout>
 

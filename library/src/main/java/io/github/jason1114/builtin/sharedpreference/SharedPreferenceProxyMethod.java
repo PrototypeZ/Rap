@@ -6,11 +6,14 @@ import android.content.SharedPreferences;
 
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
+import java.util.Calendar;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Set;
 import java.util.Vector;
+import java.util.concurrent.TimeUnit;
 
+import io.github.jason1114.annotation.Expires;
 import io.github.jason1114.annotation.Field;
 import io.github.jason1114.library.ProxyContext;
 import io.github.jason1114.library.ProxyMethod;
@@ -21,7 +24,10 @@ import io.github.jason1114.library.ProxyMethod;
 
 public class SharedPreferenceProxyMethod extends ProxyMethod {
 
+    public static final String TIMESTAMP_KEY = "__TIMESTAMP_KEY__";
+
     private Field mFieldAnnotation;
+    private Expires mExpiresAnnotation;
     private String[] mFieldNames;
     private MethodType mMethodType;
     private Class mReturnType;
@@ -31,6 +37,7 @@ public class SharedPreferenceProxyMethod extends ProxyMethod {
 
     SharedPreferenceProxyMethod(Method method) {
         mFieldAnnotation = method.getAnnotation(Field.class);
+        mExpiresAnnotation = method.getAnnotation(Expires.class);
         if (mFieldAnnotation == null) {
             throw new IllegalStateException("Each method should has a @Field annotation.");
         }
@@ -52,6 +59,9 @@ public class SharedPreferenceProxyMethod extends ProxyMethod {
     public Object call(ProxyContext context, Object... args) {
         if (context instanceof SharedPreferenceProxyContext) {
             ((SharedPreferenceProxyContext) context).ensureMetaInfo();
+            if (mExpiresAnnotation != null) {
+                ensureExpiresKeyStored(mFieldNames, ((SharedPreferenceProxyContext) context).expireKeySet);
+            }
             switch (mMethodType) {
                 case GETTER:
                     return invokeGetterMethod((SharedPreferenceProxyContext) context, args);
@@ -66,7 +76,24 @@ public class SharedPreferenceProxyMethod extends ProxyMethod {
         }
     }
 
+    private void ensureExpiresKeyStored(String[] fieldNames, Set<String> set) {
+        for (String fieldName : fieldNames) {
+            set.add(fieldName);
+        }
+    }
+
     private Object invokeGetterMethod(SharedPreferenceProxyContext context, Object... args) {
+        if (mExpiresAnnotation != null) {
+
+            long duration = mExpiresAnnotation.value();
+            TimeUnit unit = mExpiresAnnotation.timeUnit();
+            boolean crossTimeUnit = mExpiresAnnotation.crossTimeUnit();
+
+            long lastTimestamp = context.sp.getLong(getTimestampKeyByField(mFieldNames[0]), 0);
+            if (lastTimestamp != 0 && isTimeExpires(unit, crossTimeUnit, lastTimestamp, duration)) {
+                context.sp.edit().remove(mFieldNames[0]).commit();
+            }
+        }
         if (mReturnType == Long.class || mReturnType == long.class) {
             return context.sp.getLong(mFieldNames[0], 0);
         } else if (mReturnType == Integer.class || mReturnType == int.class) {
@@ -82,6 +109,41 @@ public class SharedPreferenceProxyMethod extends ProxyMethod {
         } else {
             return getCustomObject(context);
         }
+    }
+
+    private boolean isTimeExpires(TimeUnit unit, boolean crossTimeUnit, long lastTimestamp, long duration) {
+        long current = System.currentTimeMillis();
+        if (crossTimeUnit) {
+            Calendar lastCalendar = Calendar.getInstance();
+            Calendar currentCalendar = Calendar.getInstance();
+            lastCalendar.setTimeInMillis(lastTimestamp);
+            currentCalendar.setTimeInMillis(current);
+            switch (unit) {
+                case DAYS:
+                    return (currentCalendar.get(Calendar.DAY_OF_YEAR) - lastCalendar.get(Calendar.DAY_OF_YEAR) >= duration);
+                case HOURS:
+                    if (currentCalendar.get(Calendar.DAY_OF_YEAR) > lastCalendar.get(Calendar.DAY_OF_YEAR)) {
+                        return true;
+                    } else {
+                        return currentCalendar.get(Calendar.HOUR_OF_DAY) - lastCalendar.get(Calendar.HOUR_OF_DAY) >= duration;
+                    }
+                default:
+                    throw new IllegalArgumentException("cross time unit " + unit + " not supported");
+            }
+
+        } else {
+            long durationInMiles = unit.toMillis(duration);
+            if (lastTimestamp + durationInMiles < current) {
+                // The key expires
+                return true;
+            } else {
+                return false;
+            }
+        }
+    }
+
+    private String getTimestampKeyByField(String field) {
+        return TIMESTAMP_KEY + field;
     }
 
     private Object getCustomObject(SharedPreferenceProxyContext context) {
@@ -207,6 +269,12 @@ public class SharedPreferenceProxyMethod extends ProxyMethod {
                 editor.putStringSet(mFieldNames[i], (Set<String>) arg);
             } else {
                 setCustomObject(mFieldNames[i], arg, editor);
+            }
+            if (context.expireKeySet.contains(mFieldNames[i])) {
+                // update timestamp of expires key
+                context.sp.edit()
+                        .putLong(getTimestampKeyByField(mFieldNames[i]), System.currentTimeMillis())
+                        .apply();
             }
         }
         editor.apply();

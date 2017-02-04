@@ -74,6 +74,21 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
+        mBinding.gestureVerify.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                userLevelStorage.setGestureValidate(true);
+                refreshUserInfo();
+            }
+        });
+
+        mBinding.refresh.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                refreshUserInfo();
+            }
+        });
+
         refreshUserInfo();
     }
 
@@ -82,5 +97,6 @@ public class MainActivity extends AppCompatActivity {
         mBinding.age.setText(String.valueOf(u.age));
         mBinding.name.setText(u.name);
         mBinding.gender.setText(u.gender);
+        mBinding.gesture.setText(String.valueOf(userLevelStorage.isGestureCodeValidate()));
     }
 }

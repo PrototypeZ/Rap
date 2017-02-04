@@ -14,4 +14,6 @@ import java.util.concurrent.TimeUnit;
 public @interface Expires {
     long value();
     TimeUnit timeUnit() default TimeUnit.MILLISECONDS;
+
+    boolean crossTimeUnit() default false;
 }

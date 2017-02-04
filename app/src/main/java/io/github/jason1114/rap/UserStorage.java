@@ -35,9 +35,10 @@ public interface UserStorage {
     String GESTURE_CODE_VALIDATE = "GESTURE_CODE_VALIDATE";
 
     @Field(GESTURE_CODE_VALIDATE)
-    @Expires(value = 3, timeUnit = TimeUnit.MINUTES)
+    @Expires(value = 3, timeUnit = TimeUnit.SECONDS)
     boolean isGestureCodeValidate();
 
+    @Field(GESTURE_CODE_VALIDATE)
     void setGestureValidate(Boolean isValidate);
 }
 
