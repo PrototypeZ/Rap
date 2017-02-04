@@ -1,4 +1,4 @@
-package io.github.jason1114.annotation;
+package io.github.jason1114.builtin.sharedpreference;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
@@ -10,6 +10,6 @@ import java.lang.annotation.Target;
  */
 @Target(ElementType.TYPE)
 @Retention(RetentionPolicy.RUNTIME)
-public @interface SharedPreference {
+public @interface SharedPreferences {
     String value();
 }

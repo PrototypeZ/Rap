@@ -9,7 +9,7 @@ public interface StorageProxy {
 
     boolean canHandleService(Class service);
 
-    <T> ProxyContext<T> createContext(Class<T> service);
+    <T> ProxyContext<T> createContext(Class<T> service, Rap rap);
 
     ProxyMethod createProxyMethod(ProxyContext<?> ctx, Method method);
 }

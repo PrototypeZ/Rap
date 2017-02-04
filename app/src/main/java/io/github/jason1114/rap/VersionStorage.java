@@ -2,10 +2,8 @@ package io.github.jason1114.rap;
 
 import io.github.jason1114.annotation.Field;
 import io.github.jason1114.annotation.Scope;
-import io.github.jason1114.annotation.SharedPreference;
+import io.github.jason1114.builtin.sharedpreference.SharedPreferences;
 import io.github.jason1114.library.BuiltInScope;
-import io.github.jason1114.library.RapResult;
-import rx.Observable;
 
 /**
  *
@@ -14,7 +12,7 @@ import rx.Observable;
  * Created by Jason on 2017/1/28/0028.
  */
 @Scope(BuiltInScope.SCOPE_VERSION)
-@SharedPreference("io.github.jason1114.rap")
+@SharedPreferences("io.github.jason1114.rap")
 public interface VersionStorage {
 
     /**
@@ -23,10 +21,10 @@ public interface VersionStorage {
     String DOWNLOAD_APK = "DOWNLOAD_APK";
 
     @Field(DOWNLOAD_APK)
-    Observable<RapResult> setDownloadApkName(Long timestamp);
+    void setDownloadApkName(String timestamp);
 
     @Field(DOWNLOAD_APK)
-    Observable<String> getDownloadApkName();
+    String getDownloadApkName();
 
 
     /**
@@ -35,8 +33,8 @@ public interface VersionStorage {
     String TIMESTAMP_OF_LAST_CHECK_UPDATE = "TIMESTAMP_OF_LAST_CHECK_UPDATE";
 
     @Field(TIMESTAMP_OF_LAST_CHECK_UPDATE)
-    Observable<RapResult> setTimestampOfLastCheckingUpdate(Long timestamp);
+    void setTimestampOfLastCheckingUpdate(Long timestamp);
 
     @Field(TIMESTAMP_OF_LAST_CHECK_UPDATE)
-    Observable<Long> getTimestampOfLastCheckingUpdate();
+    Long getTimestampOfLastCheckingUpdate();
 }

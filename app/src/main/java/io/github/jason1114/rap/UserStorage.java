@@ -6,9 +6,7 @@ import java.util.concurrent.TimeUnit;
 import io.github.jason1114.annotation.Expires;
 import io.github.jason1114.annotation.Field;
 import io.github.jason1114.annotation.Scope;
-import io.github.jason1114.annotation.SharedPreference;
-import io.github.jason1114.library.RapResult;
-import rx.Observable;
+import io.github.jason1114.builtin.sharedpreference.SharedPreferences;
 
 /**
  *
@@ -17,7 +15,7 @@ import rx.Observable;
  * Created by Jason on 2017/1/28/0028.
  */
 @Scope("User")
-@SharedPreference("io.github.jason1114.rap")
+@SharedPreferences("io.github.jason1114.user")
 public interface UserStorage {
 
     /**
@@ -26,7 +24,10 @@ public interface UserStorage {
     String USER = "USER";
 
     @Field(USER)
-    Observable<User> getCurrentUser();
+    User getCurrentUser();
+
+    @Field(USER)
+    void setCurrentUser(User user);
 
     /**
      * 手势密码，只有 3 分钟有效
@@ -35,8 +36,8 @@ public interface UserStorage {
 
     @Field(GESTURE_CODE_VALIDATE)
     @Expires(value = 3, timeUnit = TimeUnit.MINUTES)
-    Observable<Boolean> isGestureCodeValidate();
+    boolean isGestureCodeValidate();
 
-    Observable<RapResult> setGestureValidate(Boolean isValidate);
+    void setGestureValidate(Boolean isValidate);
 }
 

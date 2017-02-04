@@ -3,6 +3,7 @@ package io.github.jason1114.library;
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
@@ -19,15 +20,19 @@ public class RapStorage<ServiceType> {
 
     ProxyContext<ServiceType> mProxyContext;
 
+    Rap mRap;
+
     private StorageProxy mStorageProxy;
 
-    private RapStorage(Class<ServiceType> service) {
+    private RapStorage(Class<ServiceType> service, Rap rap) {
         mServiceTypeClass = service;
+        mRap = rap;
         List<? extends StorageProxy> proxies = Rap.getBuiltInProxies();
+        proxies.addAll(new ArrayList(rap.mBuilder.mStorageProxies));
         for (StorageProxy proxy : proxies) {
             boolean canHandleService = proxy.canHandleService(mServiceTypeClass);
             if (canHandleService) {
-                mProxyContext = proxy.createContext(service);
+                mProxyContext = proxy.createContext(service, rap);
                 mStorageProxy = proxy;
                 break;
             }
@@ -64,11 +69,11 @@ public class RapStorage<ServiceType> {
 
     @SuppressWarnings("unchecked")
     public static <ServiceType> RapStorage<ServiceType> findByServiceType(
-            Class<ServiceType> service) {
+            Class<ServiceType> service, Rap rap) {
         if (rapStorageCache.containsKey(service)) {
             return rapStorageCache.get(service);
         } else {
-            RapStorage<ServiceType> rapStorage = new RapStorage<>(service);
+            RapStorage<ServiceType> rapStorage = new RapStorage<>(service, rap);
             rapStorageCache.put(service, rapStorage);
             return rapStorage;
         }
