@@ -18,13 +18,13 @@ import io.github.jason1114.annotation.Field;
 import io.github.jason1114.library.ProxyContext;
 import io.github.jason1114.library.ProxyMethod;
 
+import static io.github.jason1114.library.Constants.TIMESTAMP_KEY;
+
 /**
  * Created by Jason on 2017/2/3.
  */
 
 public class SharedPreferenceProxyMethod extends ProxyMethod {
-
-    public static final String TIMESTAMP_KEY = "__TIMESTAMP_KEY__";
 
     private Field mFieldAnnotation;
     private Expires mExpiresAnnotation;

@@ -15,12 +15,12 @@ import java.util.List;
 
 import io.github.jason1114.builtin.sharedpreference.SharedPreferenceStorageProxy;
 
+import static io.github.jason1114.library.Constants.VERSION_STORAGE_IDENTIFIER_PREFIX;
+
 /**
  * Created by Jason on 2017/1/30/0030.
  */
 public class Rap {
-
-    public static final String VERSION_STORAGE_IDENTIFIER_PREFIX = "__VERSION_STORAGE_IDENTIFIER_PREFIX__";
 
     public final Builder mBuilder;
 

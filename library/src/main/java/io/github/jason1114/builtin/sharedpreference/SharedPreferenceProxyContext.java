@@ -8,6 +8,8 @@ import java.util.Set;
 import io.github.jason1114.library.ProxyContext;
 import io.github.jason1114.library.Rap;
 
+import static io.github.jason1114.library.Constants.META_SCOPE;
+
 /**
  * Created by Jason on 2017/2/3.
  */
@@ -18,8 +20,6 @@ public class SharedPreferenceProxyContext<T> extends ProxyContext<T> {
     String fileName;
     android.content.SharedPreferences sp;
     Set<String> expireKeySet = new HashSet<>();
-
-    public static final String __META_SCOPE__ = "__META_SCOPE__";
 
     public SharedPreferenceProxyContext(Class<T> clazz, Rap rap) {
         super(clazz, rap);
@@ -32,8 +32,8 @@ public class SharedPreferenceProxyContext<T> extends ProxyContext<T> {
     }
 
     public void ensureMetaInfo() {
-        if (!sp.contains(__META_SCOPE__)) {
-            sp.edit().putString(__META_SCOPE__, mScope).apply();
+        if (!sp.contains(META_SCOPE)) {
+            sp.edit().putString(META_SCOPE, mScope).apply();
         }
     }
 }

@@ -13,6 +13,8 @@ import io.github.jason1114.library.ProxyMethod;
 import io.github.jason1114.library.Rap;
 import io.github.jason1114.library.StorageProxy;
 
+import static io.github.jason1114.library.Constants.META_SCOPE;
+
 /**
  * Created by Jason on 2017/1/31/0031.
  */
@@ -52,9 +54,9 @@ public class SharedPreferenceStorageProxy implements StorageProxy {
     private void removeSharedPreferenceByScope(Context context, String scope, String storageName) {
         android.content.SharedPreferences sp = context.getSharedPreferences(storageName,
                 Context.MODE_PRIVATE);
-        if (sp.contains(SharedPreferenceProxyContext.__META_SCOPE__)) {
+        if (sp.contains(META_SCOPE)) {
             try {
-                String testScope = sp.getString(SharedPreferenceProxyContext.__META_SCOPE__, "");
+                String testScope = sp.getString(META_SCOPE, "");
                 if (TextUtils.equals(scope, testScope)) {
                     sp.edit().clear().apply();
                 }
