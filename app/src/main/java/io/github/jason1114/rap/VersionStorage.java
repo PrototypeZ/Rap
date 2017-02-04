@@ -12,7 +12,7 @@ import io.github.jason1114.library.BuiltInScope;
  * Created by Jason on 2017/1/28/0028.
  */
 @Scope(BuiltInScope.SCOPE_VERSION)
-@SharedPreferences("io.github.jason1114.rap")
+@SharedPreferences("io.github.jason1114.version")
 public interface VersionStorage {
 
     /**

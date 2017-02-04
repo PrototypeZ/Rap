@@ -3,7 +3,6 @@ package io.github.jason1114.library;
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
@@ -27,8 +26,7 @@ public class RapStorage<ServiceType> {
     private RapStorage(Class<ServiceType> service, Rap rap) {
         mServiceTypeClass = service;
         mRap = rap;
-        List<? extends StorageProxy> proxies = Rap.getBuiltInProxies();
-        proxies.addAll(new ArrayList(rap.mBuilder.mStorageProxies));
+        List<? extends StorageProxy> proxies = rap.getProxies();
         for (StorageProxy proxy : proxies) {
             boolean canHandleService = proxy.canHandleService(mServiceTypeClass);
             if (canHandleService) {

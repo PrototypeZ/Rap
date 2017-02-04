@@ -51,6 +51,7 @@ public class SharedPreferenceProxyMethod extends ProxyMethod {
     @Override
     public Object call(ProxyContext context, Object... args) {
         if (context instanceof SharedPreferenceProxyContext) {
+            ((SharedPreferenceProxyContext) context).ensureMetaInfo();
             switch (mMethodType) {
                 case GETTER:
                     return invokeGetterMethod((SharedPreferenceProxyContext) context, args);

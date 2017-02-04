@@ -1,5 +1,10 @@
 package io.github.jason1114.builtin.sharedpreference;
 
+import android.content.Context;
+import android.text.TextUtils;
+import android.util.Log;
+
+import java.io.File;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;
 
@@ -29,6 +34,33 @@ public class SharedPreferenceStorageProxy implements StorageProxy {
             return new SharedPreferenceProxyMethod(method);
         } else {
             throw new IllegalStateException("Proxy method not implemented.");
+        }
+    }
+
+    @Override
+    public void clearStorageByScope(Context context, String scope) {
+        File prefsDir = new File(context.getApplicationInfo().dataDir, "shared_prefs");
+        if (prefsDir.exists() && prefsDir.isDirectory()) {
+            String[] list = prefsDir.list();
+            for (String fileName : list) {
+                String storageName = fileName.replace(".xml", "");
+                removeSharedPreferenceByScope(context, scope, storageName);
+            }
+        }
+    }
+
+    private void removeSharedPreferenceByScope(Context context, String scope, String storageName) {
+        android.content.SharedPreferences sp = context.getSharedPreferences(storageName,
+                Context.MODE_PRIVATE);
+        if (sp.contains(SharedPreferenceProxyContext.__META_SCOPE__)) {
+            try {
+                String testScope = sp.getString(SharedPreferenceProxyContext.__META_SCOPE__, "");
+                if (TextUtils.equals(scope, testScope)) {
+                    sp.edit().clear().apply();
+                }
+            } catch (Throwable throwable) {
+                Log.e("Rap", throwable.getMessage(), throwable);
+            }
         }
     }
 }

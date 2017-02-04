@@ -3,6 +3,7 @@ package io.github.jason1114.rap;
 import android.databinding.DataBindingUtil;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
+import android.view.View;
 
 import io.github.jason1114.library.Rap;
 import io.github.jason1114.rap.databinding.ActivityMainBinding;
@@ -42,7 +43,7 @@ public class MainActivity extends AppCompatActivity {
          */
         versionLevelStorage = rap.getStorage(VersionStorage.class).api();
         mBinding.downloadApk.setText(versionLevelStorage.getDownloadApkName());
-        mBinding.downloadApk.setText(String.valueOf(versionLevelStorage.getTimestampOfLastCheckingUpdate()));
+        mBinding.lastCheck.setText(String.valueOf(versionLevelStorage.getTimestampOfLastCheckingUpdate()));
         versionLevelStorage.setDownloadApkName("aaa.apk");
         versionLevelStorage.setTimestampOfLastCheckingUpdate(10000l);
 
@@ -52,15 +53,32 @@ public class MainActivity extends AppCompatActivity {
          */
         userLevelStorage = rap.getStorage(UserStorage.class).api();
 
-        User user = new User();
-        user.age = 10l;
-        user.gender = "male";
-        user.name = "Jack";
+        mBinding.login.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                User user = new User();
+                user.age = 10l;
+                user.gender = "male";
+                user.name = "Jack";
+                userLevelStorage.setCurrentUser(user);
 
-        userLevelStorage.setCurrentUser(user);
+                refreshUserInfo();
+            }
+        });
 
+        mBinding.logout.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                rap.invalidate(SCOPE_USER);
+                refreshUserInfo();
+            }
+        });
+
+        refreshUserInfo();
+    }
+
+    private void refreshUserInfo() {
         User u = userLevelStorage.getCurrentUser();
-
         mBinding.age.setText(String.valueOf(u.age));
         mBinding.name.setText(u.name);
         mBinding.gender.setText(u.gender);

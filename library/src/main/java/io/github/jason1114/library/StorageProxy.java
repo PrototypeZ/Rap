@@ -1,5 +1,7 @@
 package io.github.jason1114.library;
 
+import android.content.Context;
+
 import java.lang.reflect.Method;
 
 /**
@@ -12,4 +14,6 @@ public interface StorageProxy {
     <T> ProxyContext<T> createContext(Class<T> service, Rap rap);
 
     ProxyMethod createProxyMethod(ProxyContext<?> ctx, Method method);
+
+    void clearStorageByScope(Context context, String scope);
 }

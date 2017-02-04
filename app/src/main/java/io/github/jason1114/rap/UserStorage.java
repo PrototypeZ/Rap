@@ -14,7 +14,7 @@ import io.github.jason1114.builtin.sharedpreference.SharedPreferences;
  *
  * Created by Jason on 2017/1/28/0028.
  */
-@Scope("User")
+@Scope(MainActivity.SCOPE_USER)
 @SharedPreferences("io.github.jason1114.user")
 public interface UserStorage {
 
