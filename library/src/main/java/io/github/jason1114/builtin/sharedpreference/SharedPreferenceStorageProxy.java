@@ -33,7 +33,7 @@ public class SharedPreferenceStorageProxy implements StorageProxy {
     @Override
     public ProxyMethod createProxyMethod(ProxyContext<?> ctx, Method method) {
         if (ctx instanceof SharedPreferenceProxyContext) {
-            return new SharedPreferenceProxyMethod(method);
+            return new SharedPreferenceProxyMethod(ctx, method);
         } else {
             throw new IllegalStateException("Proxy method not implemented.");
         }

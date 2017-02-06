@@ -39,7 +39,7 @@ public class SharedPreferenceProxyMethod extends ProxyMethod {
 
     private java.lang.reflect.Field returnTypeFields;
 
-    SharedPreferenceProxyMethod(Method method) {
+    SharedPreferenceProxyMethod(ProxyContext context, Method method) {
         mFieldAnnotation = method.getAnnotation(Field.class);
         mExpiresAnnotation = method.getAnnotation(Expires.class);
         if (mFieldAnnotation == null) {
@@ -56,6 +56,9 @@ public class SharedPreferenceProxyMethod extends ProxyMethod {
         } else {
             // getter method
             mMethodType = MethodType.GETTER;
+        }
+        if (mExpiresAnnotation != null) {
+            ensureExpiresKeyStored(mFieldNames, ((SharedPreferenceProxyContext) context).expireKeySet);
         }
     }
 
