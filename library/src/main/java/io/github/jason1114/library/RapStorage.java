@@ -49,6 +49,7 @@ public class RapStorage<ServiceType> {
 
     @SuppressWarnings("unchecked")
     public ServiceType api() {
+        loadAllMethods();
         return (ServiceType) Proxy.newProxyInstance(mServiceTypeClass.getClassLoader(),
                 new Class<?>[]{mServiceTypeClass},
                 new InvocationHandler() {
@@ -63,6 +64,13 @@ public class RapStorage<ServiceType> {
                         return proxyMethod.call(mProxyContext, args);
                     }
                 });
+    }
+
+    public void loadAllMethods() {
+        Method[] methods = mServiceTypeClass.getMethods();
+        for (Method method : methods) {
+            loadProxyMethod(method);
+        }
     }
 
     @SuppressWarnings("unchecked")
