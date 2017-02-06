@@ -1,5 +1,6 @@
 package io.github.jason1114.builtin.sharedpreference;
 
+import com.google.gson.Gson;
 import com.google.gson.annotations.SerializedName;
 
 import android.content.SharedPreferences;
@@ -9,6 +10,7 @@ import java.lang.reflect.Modifier;
 import java.util.Calendar;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Set;
 import java.util.Vector;
 import java.util.concurrent.TimeUnit;
@@ -32,6 +34,8 @@ public class SharedPreferenceProxyMethod extends ProxyMethod {
     private MethodType mMethodType;
     private Class mReturnType;
     private HashMap<Class, java.lang.reflect.Field[]> typeFieldsCache = new HashMap<>();
+
+    Gson mGson = new Gson();
 
     private java.lang.reflect.Field returnTypeFields;
 
@@ -104,8 +108,10 @@ public class SharedPreferenceProxyMethod extends ProxyMethod {
             return context.sp.getFloat(mFieldNames[0], 0f);
         } else if (mReturnType == String.class) {
             return context.sp.getString(mFieldNames[0], "");
-        } else if (mReturnType == Set.class) {
+        } else if (Set.class.isAssignableFrom(mReturnType)) {
             return context.sp.getStringSet(mFieldNames[0], Collections.<String>emptySet());
+        } else if (List.class.isAssignableFrom(mReturnType)) {
+            return mGson.fromJson(context.sp.getString(mFieldNames[0], "[]"), List.class);
         } else {
             return getCustomObject(context);
         }
@@ -182,8 +188,10 @@ public class SharedPreferenceProxyMethod extends ProxyMethod {
                     editor.putFloat(keyInSpFile, fieldType.isPrimitive() ? field.getFloat(arg) : (Float) field.get(arg));
                 } else if (fieldType == String.class) {
                     editor.putString(keyInSpFile, (String) field.get(arg));
-                } else if (fieldType == Set.class) {
+                } else if (Set.class.isAssignableFrom(fieldType)) {
                     editor.putStringSet(keyInSpFile, (Set<String>) field.get(arg));
+                } else if (List.class.isAssignableFrom(fieldType)) {
+                    editor.putString(keyInSpFile, mGson.toJson(field.get(arg)));
                 } else {
                     continue;
                 }
@@ -217,8 +225,10 @@ public class SharedPreferenceProxyMethod extends ProxyMethod {
             data = context.sp.getFloat(keyInSpFile, 0f);
         } else if (fieldType == String.class) {
             data = context.sp.getString(keyInSpFile, "");
-        } else if (fieldType == Set.class) {
+        } else if (Set.class.isAssignableFrom(fieldType)) {
             data = context.sp.getStringSet(keyInSpFile, Collections.<String>emptySet());
+        } else if (List.class.isAssignableFrom(fieldType)) {
+            data = mGson.fromJson(context.sp.getString(keyInSpFile, "[]"), List.class);
         } else {
             return;
         }
@@ -263,10 +273,12 @@ public class SharedPreferenceProxyMethod extends ProxyMethod {
                 editor.putBoolean(mFieldNames[i], (Boolean) arg);
             } else if (arg.getClass() == Float.class || arg.getClass() == float.class) {
                 editor.putFloat(mFieldNames[i], (Float) arg);
-            } else if (arg.getClass() == String.class) {
+            } else if (arg instanceof String) {
                 editor.putString(mFieldNames[i], (String) arg);
-            } else if (arg.getClass() == Set.class) {
+            } else if (arg instanceof Set) {
                 editor.putStringSet(mFieldNames[i], (Set<String>) arg);
+            } else if (arg instanceof List) {
+                editor.putString(mFieldNames[i], mGson.toJson(arg));
             } else {
                 setCustomObject(mFieldNames[i], arg, editor);
             }

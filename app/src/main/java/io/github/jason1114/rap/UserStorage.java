@@ -1,6 +1,7 @@
 package io.github.jason1114.rap;
 
 
+import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 import io.github.jason1114.annotation.Expires;
@@ -40,5 +41,16 @@ public interface UserStorage {
 
     @Field(GESTURE_CODE_VALIDATE)
     void setGestureValidate(Boolean isValidate);
+
+    /**
+     * 关注的人
+     */
+    String LIKES = "LIKES";
+
+    @Field(LIKES)
+    List<User> getLikes();
+
+    @Field(LIKES)
+    void setLikes(List<User> users);
 }
 

@@ -5,6 +5,9 @@ import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
 import android.view.View;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import io.github.jason1114.library.Rap;
 import io.github.jason1114.rap.databinding.ActivityMainBinding;
 
@@ -35,7 +38,7 @@ public class MainActivity extends AppCompatActivity {
          * App level storage
          */
         appLevelStorage = rap.getStorage(AppStorage.class).api();
-        mBinding.isNotFirstOpen.setText(String.valueOf(appLevelStorage.isOpenedBefore()));
+        mBinding.isOpenBefore.setText(String.valueOf(appLevelStorage.isOpenedBefore()));
         appLevelStorage.setIsOpenedBefore(true);
 
         /**
@@ -62,6 +65,21 @@ public class MainActivity extends AppCompatActivity {
                 user.name = "Jack";
                 userLevelStorage.setCurrentUser(user);
 
+                List<User> userLikes = new ArrayList<>();
+                User user1 = new User();
+                user1.age = 10l;
+                user1.gender = "male";
+                user1.name = "Lucy";
+
+                User user2 = new User();
+                user2.age = 10l;
+                user2.gender = "male";
+                user2.name = "Lily";
+
+                userLikes.add(user1);
+                userLikes.add(user2);
+
+                userLevelStorage.setLikes(userLikes);
                 refreshUserInfo();
             }
         });
@@ -98,5 +116,6 @@ public class MainActivity extends AppCompatActivity {
         mBinding.name.setText(u.name);
         mBinding.gender.setText(u.gender);
         mBinding.gesture.setText(String.valueOf(userLevelStorage.isGestureCodeValidate()));
+        mBinding.likes.setText(userLevelStorage.getLikes().toString());
     }
 }

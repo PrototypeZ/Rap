@@ -27,9 +27,9 @@
             <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="isNotFirstOpen:"/>
+                    android:text="isOpenBefore:"/>
             <TextView
-                    android:id="@+id/isNotFirstOpen"
+                    android:id="@+id/isOpenBefore"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text=""/>
@@ -97,6 +97,21 @@
                     android:text="GestureCodeValidate:"/>
             <TextView
                     android:id="@+id/gesture"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text=""/>
+        </LinearLayout>
+
+        <LinearLayout android:layout_width="match_parent"
+                      android:layout_height="wrap_content"
+                      android:orientation="horizontal"
+                      android:layout_marginTop="10dp">
+            <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="likes:"/>
+            <TextView
+                    android:id="@+id/likes"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text=""/>
