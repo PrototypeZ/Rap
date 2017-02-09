@@ -268,28 +268,34 @@ public class SharedPreferenceProxyMethod extends ProxyMethod {
         SharedPreferences.Editor editor = context.sp.edit();
         for (int i = 0; i < args.length; i++) {
             Object arg = args[i];
-            if (arg.getClass() == Long.class || arg.getClass() == long.class) {
-                editor.putLong(mFieldNames[i], (Long) arg);
-            } else if (arg.getClass() == Integer.class || arg.getClass() == int.class) {
-                editor.putInt(mFieldNames[i], (Integer) arg);
-            } else if (arg.getClass() == Boolean.class || arg.getClass() == boolean.class) {
-                editor.putBoolean(mFieldNames[i], (Boolean) arg);
-            } else if (arg.getClass() == Float.class || arg.getClass() == float.class) {
-                editor.putFloat(mFieldNames[i], (Float) arg);
-            } else if (arg instanceof String) {
-                editor.putString(mFieldNames[i], (String) arg);
-            } else if (arg instanceof Set) {
-                editor.putStringSet(mFieldNames[i], (Set<String>) arg);
-            } else if (arg instanceof List) {
-                editor.putString(mFieldNames[i], mGson.toJson(arg));
+            // 如果参数为 null， 就删除该 key 值
+            if (arg == null) {
+                editor.remove(mFieldNames[i]);
             } else {
-                setCustomObject(mFieldNames[i], arg, editor);
-            }
-            if (context.expireKeySet.contains(mFieldNames[i])) {
-                // update timestamp of expires key
-                context.sp.edit()
-                        .putLong(getTimestampKeyByField(mFieldNames[i]), System.currentTimeMillis())
-                        .apply();
+                if (arg.getClass() == Long.class || arg.getClass() == long.class) {
+                    editor.putLong(mFieldNames[i], (Long) arg);
+                } else if (arg.getClass() == Integer.class || arg.getClass() == int.class) {
+                    editor.putInt(mFieldNames[i], (Integer) arg);
+                } else if (arg.getClass() == Boolean.class || arg.getClass() == boolean.class) {
+                    editor.putBoolean(mFieldNames[i], (Boolean) arg);
+                } else if (arg.getClass() == Float.class || arg.getClass() == float.class) {
+                    editor.putFloat(mFieldNames[i], (Float) arg);
+                } else if (arg instanceof String) {
+                    editor.putString(mFieldNames[i], (String) arg);
+                } else if (arg instanceof Set) {
+                    editor.putStringSet(mFieldNames[i], (Set<String>) arg);
+                } else if (arg instanceof List) {
+                    editor.putString(mFieldNames[i], mGson.toJson(arg));
+                } else {
+                    setCustomObject(mFieldNames[i], arg, editor);
+                }
+                // 更新时间戳
+                if (context.expireKeySet.contains(mFieldNames[i])) {
+                    // update timestamp of expires key
+                    context.sp.edit()
+                            .putLong(getTimestampKeyByField(mFieldNames[i]), System.currentTimeMillis())
+                            .apply();
+                }
             }
         }
         editor.apply();
