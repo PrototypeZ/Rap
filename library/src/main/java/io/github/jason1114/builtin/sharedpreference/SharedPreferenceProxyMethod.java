@@ -4,7 +4,9 @@ import com.google.gson.Gson;
 import com.google.gson.annotations.SerializedName;
 
 import android.content.SharedPreferences;
+import android.text.TextUtils;
 
+import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.util.Calendar;
@@ -14,9 +16,12 @@ import java.util.List;
 import java.util.Set;
 import java.util.Vector;
 import java.util.concurrent.TimeUnit;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import io.github.jason1114.annotation.Expires;
 import io.github.jason1114.annotation.Field;
+import io.github.jason1114.annotation.Key;
 import io.github.jason1114.library.ProxyContext;
 import io.github.jason1114.library.ProxyMethod;
 
@@ -31,13 +36,37 @@ public class SharedPreferenceProxyMethod extends ProxyMethod {
     private Field mFieldAnnotation;
     private Expires mExpiresAnnotation;
     private String[] mFieldNames;
+
+    /**
+     * 两个维度，第一个维度代表第几个 @Field 标签里的带占位符的 KEY_NAME
+     * 第二个维度代表在这个带占位符的 KEY_NAME 里，占位符对应具体传参参数在函数声明里的位置，
+     *
+     * 例如：
+     * <p>
+     *
+     * @Field("USER_NAME_{userId}", "ARTICLE_INFO_{articleId}")
+     * void setUserNameAndArticleInfo(
+     * @Key("userId")String userId, String username,
+     * @Key("articleId") String articleId, String articleInfo
+     * );
+     * </p>
+     * 对应的二位数组：
+     * [
+     * [0],
+     * [2]
+     * ]
+     */
+    private int[][] mPlaceholderPositionForFieldName;
+
+
     private MethodType mMethodType;
     private Class mReturnType;
+    private Annotation[][] mParameterAnnotations;
     private HashMap<Class, java.lang.reflect.Field[]> typeFieldsCache = new HashMap<>();
+    Pattern mPattern = Pattern.compile("\\{(\\w+)\\}");
+    Pattern mPatternForReplace = Pattern.compile("\\{\\w+\\}");
 
     Gson mGson = new Gson();
-
-    private java.lang.reflect.Field returnTypeFields;
 
     SharedPreferenceProxyMethod(ProxyContext context, Method method) {
         mFieldAnnotation = method.getAnnotation(Field.class);
@@ -48,6 +77,11 @@ public class SharedPreferenceProxyMethod extends ProxyMethod {
         mFieldNames = mFieldAnnotation.value();
         if (mFieldNames.length == 0) {
             throw new IllegalArgumentException("Field names should not be empty");
+        }
+        mPlaceholderPositionForFieldName = new int[mFieldNames.length][];
+        mParameterAnnotations = method.getParameterAnnotations();
+        for (int i = 0; i < mFieldNames.length; i++) {
+            setUpPlaceholderForField(i);
         }
         mReturnType = method.getReturnType();
         if (mReturnType == void.class) {
@@ -60,6 +94,38 @@ public class SharedPreferenceProxyMethod extends ProxyMethod {
         if (mExpiresAnnotation != null) {
             ensureExpiresKeyStored(mFieldNames, ((SharedPreferenceProxyContext) context).expireKeySet);
         }
+    }
+
+    private void setUpPlaceholderForField(int fieldIndex) {
+        String field = mFieldNames[fieldIndex];
+        if (TextUtils.isEmpty(field)) return;
+        Matcher matcher = mPattern.matcher(field);
+        int i = 0;
+        while (matcher.find()) {
+            String placeholder = matcher.group(1);
+            int index = getPlaceHolderIndexInMethodDeclaration(placeholder);
+            if (index < 0) {
+                throw new IllegalArgumentException("Can't find placeholder " + placeholder);
+            }
+            if (mPlaceholderPositionForFieldName[fieldIndex] == null) {
+                // TODO 目前最多支持5个可变参数
+                mPlaceholderPositionForFieldName[fieldIndex] = new int[5];
+            }
+            mPlaceholderPositionForFieldName[fieldIndex][i++] = index;
+        }
+    }
+
+    private int getPlaceHolderIndexInMethodDeclaration(String placeholder) {
+        for (int j = 0; j < mParameterAnnotations.length; j++) {
+            Annotation[] annotations = mParameterAnnotations[j];
+            for (int k = 0; k < annotations.length; k++) {
+                Annotation a = annotations[k];
+                if (a instanceof Key && TextUtils.equals(placeholder, ((Key) a).value())) {
+                    return j;
+                }
+            }
+        }
+        return -1;
     }
 
     @Override
@@ -89,32 +155,51 @@ public class SharedPreferenceProxyMethod extends ProxyMethod {
         }
     }
 
-    private Object invokeGetterMethod(SharedPreferenceProxyContext context, Object... args) {
-        if (mExpiresAnnotation != null) {
+    private String getKeyForStorage(int fieldIndex, Object... args) {
+        int[] positions = mPlaceholderPositionForFieldName[fieldIndex];
+        if (positions != null && positions.length > 0) {
+            Matcher matcher = mPatternForReplace.matcher(mFieldNames[fieldIndex]);
+            StringBuffer sb = new StringBuffer();
+            int i = 0;
+            while (matcher.find()) {
+                matcher.appendReplacement(
+                        sb,
+                        String.valueOf(args[positions[i++]])
+                );
+            }
+            matcher.appendTail(sb);
+            return sb.toString();
+        } else {
+            return mFieldNames[fieldIndex];
+        }
+    }
 
+    private Object invokeGetterMethod(SharedPreferenceProxyContext context, Object... args) {
+        String getterKey = getKeyForStorage(0, args);
+        if (mExpiresAnnotation != null) {
             long duration = mExpiresAnnotation.value();
             TimeUnit unit = mExpiresAnnotation.timeUnit();
             boolean crossTimeUnit = mExpiresAnnotation.crossTimeUnit();
 
-            long lastTimestamp = context.sp.getLong(getTimestampKeyByField(mFieldNames[0]), 0);
+            long lastTimestamp = context.sp.getLong(getTimestampKeyByField(getterKey), 0);
             if (lastTimestamp != 0 && isTimeExpires(unit, crossTimeUnit, lastTimestamp, duration)) {
-                context.sp.edit().remove(mFieldNames[0]).commit();
+                context.sp.edit().remove(getterKey).commit();
             }
         }
         if (mReturnType == Long.class || mReturnType == long.class) {
-            return context.sp.getLong(mFieldNames[0], 0);
+            return context.sp.getLong(getterKey, 0);
         } else if (mReturnType == Integer.class || mReturnType == int.class) {
-            return context.sp.getInt(mFieldNames[0], 0);
+            return context.sp.getInt(getterKey, 0);
         } else if (mReturnType == Boolean.class || mReturnType == boolean.class) {
-            return context.sp.getBoolean(mFieldNames[0], false);
+            return context.sp.getBoolean(getterKey, false);
         } else if (mReturnType == Float.class || mReturnType == float.class) {
-            return context.sp.getFloat(mFieldNames[0], 0f);
+            return context.sp.getFloat(getterKey, 0f);
         } else if (mReturnType == String.class) {
-            return context.sp.getString(mFieldNames[0], "");
+            return context.sp.getString(getterKey, "");
         } else if (Set.class.isAssignableFrom(mReturnType)) {
-            return context.sp.getStringSet(mFieldNames[0], Collections.<String>emptySet());
+            return context.sp.getStringSet(getterKey, Collections.<String>emptySet());
         } else if (List.class.isAssignableFrom(mReturnType)) {
-            return mGson.fromJson(context.sp.getString(mFieldNames[0], "[]"), List.class);
+            return mGson.fromJson(context.sp.getString(getterKey, "[]"), List.class);
         } else {
             return getCustomObject(context);
         }
@@ -251,7 +336,9 @@ public class SharedPreferenceProxyMethod extends ProxyMethod {
         for (int i = 0; i < fields.length; i++) {
             java.lang.reflect.Field field = fields[i];
             field.setAccessible(true);
-            if (field.getAnnotation(SerializedName.class) != null && !Modifier.isTransient(field.getModifiers())) {
+            if (field.getAnnotation(SerializedName.class) != null
+                    && !Modifier.isTransient(field.getModifiers())
+                    && !Modifier.isStatic(field.getModifiers())) {
                 vector.add(field);
             }
         }
@@ -262,41 +349,48 @@ public class SharedPreferenceProxyMethod extends ProxyMethod {
 
     @SuppressWarnings("unchecked")
     private void invokeSetterMethod(final SharedPreferenceProxyContext context, final Object... args) {
-        if (args == null || mFieldNames == null || args.length != mFieldNames.length) {
+        if (args == null || mFieldNames == null) {
             throw new IllegalArgumentException("Field names and arguments length mismatch");
         }
         SharedPreferences.Editor editor = context.sp.edit();
+        int setterIndex = 0;
         for (int i = 0; i < args.length; i++) {
+            if (mParameterAnnotations[i] != null && mParameterAnnotations[i].length > 0) {
+                // 这个位置的参数被 Key 注解标记，不做 set 处理
+                continue;
+            }
             Object arg = args[i];
+            String keyForSetter = getKeyForStorage(setterIndex, args);
             // 如果参数为 null， 就删除该 key 值
             if (arg == null) {
-                editor.remove(mFieldNames[i]);
+                editor.remove(keyForSetter);
             } else {
                 if (arg.getClass() == Long.class || arg.getClass() == long.class) {
-                    editor.putLong(mFieldNames[i], (Long) arg);
+                    editor.putLong(keyForSetter, (Long) arg);
                 } else if (arg.getClass() == Integer.class || arg.getClass() == int.class) {
-                    editor.putInt(mFieldNames[i], (Integer) arg);
+                    editor.putInt(keyForSetter, (Integer) arg);
                 } else if (arg.getClass() == Boolean.class || arg.getClass() == boolean.class) {
-                    editor.putBoolean(mFieldNames[i], (Boolean) arg);
+                    editor.putBoolean(keyForSetter, (Boolean) arg);
                 } else if (arg.getClass() == Float.class || arg.getClass() == float.class) {
-                    editor.putFloat(mFieldNames[i], (Float) arg);
+                    editor.putFloat(keyForSetter, (Float) arg);
                 } else if (arg instanceof String) {
-                    editor.putString(mFieldNames[i], (String) arg);
+                    editor.putString(keyForSetter, (String) arg);
                 } else if (arg instanceof Set) {
-                    editor.putStringSet(mFieldNames[i], (Set<String>) arg);
+                    editor.putStringSet(keyForSetter, (Set<String>) arg);
                 } else if (arg instanceof List) {
-                    editor.putString(mFieldNames[i], mGson.toJson(arg));
+                    editor.putString(keyForSetter, mGson.toJson(arg));
                 } else {
-                    setCustomObject(mFieldNames[i], arg, editor);
+                    setCustomObject(keyForSetter, arg, editor);
                 }
                 // 更新时间戳
-                if (context.expireKeySet.contains(mFieldNames[i])) {
+                if (context.expireKeySet.contains(mFieldNames[setterIndex])) {
                     // update timestamp of expires key
                     context.sp.edit()
-                            .putLong(getTimestampKeyByField(mFieldNames[i]), System.currentTimeMillis())
+                            .putLong(getTimestampKeyByField(keyForSetter), System.currentTimeMillis())
                             .apply();
                 }
             }
+            setterIndex++;
         }
         editor.apply();
     }

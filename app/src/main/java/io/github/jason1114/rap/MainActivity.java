@@ -41,6 +41,33 @@ public class MainActivity extends AppCompatActivity {
         mBinding.isOpenBefore.setText(String.valueOf(appLevelStorage.isOpenedBefore()));
         appLevelStorage.setIsOpenedBefore(true);
 
+        mBinding.set.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                appLevelStorage.setUserDraft("110", "hello!");
+                appLevelStorage.setUserSetting("110", "show", "world!");
+                mBinding.refreshAppStorage.performClick();
+            }
+        });
+        mBinding.batchSet.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                appLevelStorage.setUserDraftAndSetting(
+                        "110", "HELLO!",
+                        "show", "WORLD!"
+                );
+                mBinding.refreshAppStorage.performClick();
+            }
+        });
+        mBinding.refreshAppStorage.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                mBinding.draft.setText(appLevelStorage.getUserDraft("110"));
+                mBinding.optionShow.setText(appLevelStorage.getUserSetting("110", "show"));
+            }
+        });
+        mBinding.refreshAppStorage.performClick();
+
         /**
          * Version level storage
          */
